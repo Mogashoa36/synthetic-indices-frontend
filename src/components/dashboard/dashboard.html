@@ -1,0 +1,146 @@
+<div class="dashboard">
+  <div class="page-header">
+    <div>
+      <h1>Trading Dashboard</h1>
+      <p class="subtitle">Synthetic Signal Monitor</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" (click)="expireStale()">⏱ Expire Stale</button>
+      <a routerLink="/signals/new" class="btn btn-buy">＋ New Signal</a>
+    </div>
+  </div>
+
+  <div class="alert-error" *ngIf="error">⚠️ {{ error }}</div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" *ngIf="stats">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Signals</div>
+      <div class="kpi-value">{{ stats?.totalSignals }}</div>
+    </div>
+    <div class="kpi-card kpi-active">
+      <div class="kpi-label">Active</div>
+      <div class="kpi-value">{{ stats?.activeSignals }}</div>
+    </div>
+    <div class="kpi-card kpi-buy">
+      <div class="kpi-label">🟢 BUY</div>
+      <div class="kpi-value">{{ stats?.buySignals }}</div>
+    </div>
+    <div class="kpi-card kpi-sell">
+      <div class="kpi-label">🔴 SELL</div>
+      <div class="kpi-value">{{ stats?.sellSignals }}</div>
+    </div>
+    <div class="kpi-card kpi-hold">
+      <div class="kpi-label">🟡 HOLD</div>
+      <div class="kpi-value">{{ stats?.holdSignals }}</div>
+    </div>
+    <div class="kpi-card kpi-triggered">
+      <div class="kpi-label">Triggered</div>
+      <div class="kpi-value">{{ stats?.triggeredSignals }}</div>
+    </div>
+    <div class="kpi-card kpi-expired">
+      <div class="kpi-label">Expired</div>
+      <div class="kpi-value">{{ stats?.expiredSignals }}</div>
+    </div>
+    <div class="kpi-card kpi-conf">
+      <div class="kpi-label">Avg Confidence</div>
+      <div class="kpi-value">{{ stats?.avgConfidence }}%</div>
+    </div>
+  </div>
+
+  <!-- Two-column layout -->
+  <div class="dashboard-grid">
+    <!-- Top Active Signals -->
+    <div class="card">
+      <div class="card-header">
+        <h3>🔥 Top Active Signals</h3>
+        <a routerLink="/signals" [queryParams]="{status:'ACTIVE'}" class="see-all">See all →</a>
+      </div>
+      <div class="signal-rows" *ngIf="activeSignals.length > 0">
+        <a class="signal-row" *ngFor="let s of activeSignals" [routerLink]="['/signals', s.id]">
+          <div class="row-left">
+            <span [class]="'signal-badge ' + getSignalClass(s.signalType)">{{ s.signalType }}</span>
+            <div class="row-info">
+              <span class="sym">{{ s.symbol }}</span>
+              <span class="tf">{{ s.timeframe }} · {{ s.assetClass }}</span>
+            </div>
+          </div>
+          <div class="row-right">
+            <div class="conf-bar-wrap">
+              <div class="conf-bar" [style.width.%]="s.confidence"
+                   [style.background]="confidenceColor(s.confidence)"></div>
+            </div>
+            <span class="conf-num" [style.color]="confidenceColor(s.confidence)">
+              {{ s.confidence }}%
+            </span>
+          </div>
+        </a>
+      </div>
+      <div class="empty-card" *ngIf="activeSignals.length === 0 && !loading">
+        No active signals. <a routerLink="/signals/new">Create one →</a>
+      </div>
+    </div>
+
+    <!-- By Asset Class -->
+    <div class="card">
+      <div class="card-header"><h3>📊 By Asset Class</h3></div>
+      <div class="breakdown-list" *ngIf="stats">
+        <div class="breakdown-row" *ngFor="let entry of assetClassEntries()">
+          <span class="breakdown-label">{{ entry[0] }}</span>
+          <div class="breakdown-bar-track">
+            <div class="breakdown-bar"
+                 [style.width.%]="(entry[1] / (stats?.totalSignals || 1)) * 100"></div>
+          </div>
+          <span class="breakdown-count">{{ entry[1] }}</span>
+        </div>
+        <div class="empty-card" *ngIf="assetClassEntries().length === 0">No data yet.</div>
+      </div>
+
+      <div class="card-header" style="margin-top:1.5rem"><h3>🎯 By Strategy</h3></div>
+      <div class="breakdown-list" *ngIf="stats">
+        <div class="breakdown-row" *ngFor="let entry of strategyEntries()">
+          <span class="breakdown-label">{{ entry[0] }}</span>
+          <div class="breakdown-bar-track">
+            <div class="breakdown-bar" style="background:#818cf8"
+                 [style.width.%]="(entry[1] / (stats?.totalSignals || 1)) * 100"></div>
+          </div>
+          <span class="breakdown-count">{{ entry[1] }}</span>
+        </div>
+        <div class="empty-card" *ngIf="strategyEntries().length === 0">No data yet.</div>
+      </div>
+    </div>
+
+    <!-- Recent Signals -->
+    <div class="card full-width">
+      <div class="card-header">
+        <h3>🕐 Recent Signals</h3>
+        <a routerLink="/signals" class="see-all">View all →</a>
+      </div>
+      <table class="signal-table" *ngIf="recentSignals.length > 0">
+        <thead>
+        <tr>
+          <th>Symbol</th><th>Name</th><th>Type</th><th>Status</th>
+          <th>Confidence</th><th>Entry</th><th>Strategy</th><th>Timeframe</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let s of recentSignals" [routerLink]="['/signals', s.id]" class="table-row">
+          <td><span class="mono">{{ s.symbol }}</span></td>
+          <td>{{ s.name }}</td>
+          <td><span [class]="'signal-badge sm ' + getSignalClass(s.signalType)">{{ s.signalType }}</span></td>
+          <td><span [class]="'status-badge ' + getStatusClass(s.status)">{{ s.status }}</span></td>
+          <td>
+            <span [style.color]="confidenceColor(s.confidence)">{{ s.confidence }}%</span>
+          </td>
+          <td><span class="mono">{{ s.entryPrice | number:'1.2-5' }}</span></td>
+          <td>{{ s.strategy || '—' }}</td>
+          <td>{{ s.timeframe }}</td>
+        </tr>
+        </tbody>
+      </table>
+      <div class="empty-card" *ngIf="recentSignals.length === 0 && !loading">
+        No signals yet. <a routerLink="/signals/new">Add your first signal →</a>
+      </div>
+    </div>
+  </div>
+</div>
