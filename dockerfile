@@ -16,7 +16,7 @@ RUN npm install
 COPY . .
 
 # Build Angular app
-RUN npm run build -- --configuration production
+RUN npm run build
 
 # =========================
 # Stage 2 - Nginx Server
@@ -24,7 +24,7 @@ RUN npm run build -- --configuration production
 FROM nginx:alpine
 
 # Copy Angular build output to nginx folder
-COPY --from=build /app/dist/front/browser /usr/share/nginx/html
+COPY --from=build /dist/front/browser /usr/share/nginx/html
 
 # Expose nginx port
 EXPOSE 80
