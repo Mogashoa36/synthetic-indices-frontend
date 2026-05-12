@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22.12.0'
+          node-version: '20'
 
       # Install dependencies
       - name: Install dependencies
@@ -27,7 +27,7 @@ jobs:
       - name: Build Angular app
         run: npm run build -- --configuration production
 
-            # Create Dockerfile if missing
+      # Create Dockerfile if missing
       - name: Create Dockerfile if not exists
         run: |
           if [ ! -f Dockerfile ]; then
@@ -35,17 +35,17 @@ jobs:
 
             cat > Dockerfile << 'EOF'
             FROM nginx:alpine
-
+            
             COPY dist /usr/share/nginx/html
-
+            
             EXPOSE 80
-
+            
             CMD ["nginx", "-g", "daemon off;"]
             EOF
-
-          else
-            echo "Dockerfile already exists."
-          fi
+            
+                      else
+                        echo "Dockerfile already exists."
+                      fi
 
       # Login to Docker Hub
       - name: Login to Docker Hub
