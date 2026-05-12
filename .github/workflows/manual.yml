@@ -27,13 +27,13 @@ jobs:
       - name: Build Angular app
         run: npm run build -- --configuration production
 
-      # Create Dockerfile if missing
+            # Create Dockerfile if missing
       - name: Create Dockerfile if not exists
         run: |
           if [ ! -f Dockerfile ]; then
             echo "Creating Dockerfile..."
 
-            cat <<EOF > Dockerfile
+            cat > Dockerfile << 'EOF'
             FROM nginx:alpine
 
             COPY dist /usr/share/nginx/html
@@ -42,6 +42,7 @@ jobs:
 
             CMD ["nginx", "-g", "daemon off;"]
             EOF
+
           else
             echo "Dockerfile already exists."
           fi
