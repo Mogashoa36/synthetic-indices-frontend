@@ -29,11 +29,14 @@ jobs:
 
       # Create Dockerfile if missing
       - name: Create Dockerfile if not exists
+        shell: bash
         run: |
+          set -e
+
           if [ ! -f Dockerfile ]; then
             echo "Creating Dockerfile..."
 
-            cat > Dockerfile << 'EOF'
+            cat > Dockerfile <<EOF
             FROM nginx:alpine
             
             COPY dist /usr/share/nginx/html
@@ -42,11 +45,11 @@ jobs:
             
             CMD ["nginx", "-g", "daemon off;"]
             EOF
-            
-                      else
-                        echo "Dockerfile already exists."
-                      fi
 
+          else
+            echo "Dockerfile already exists."
+          fi
+          
       # Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
